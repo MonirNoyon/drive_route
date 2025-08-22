@@ -1,3 +1,5 @@
+import 'package:car_routing_application/config/routes/app_pages.dart';
+import 'package:car_routing_application/config/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -7,20 +9,6 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.green,
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.local_offer), label: "Coupons"),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
-        ],
-      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -28,7 +16,7 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Section Profile + Weather
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -36,7 +24,7 @@ class HomePage extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundImage: AssetImage("assets/images/user_avatar.png"),
+                          child: Icon(Icons.person, color: Colors.black),
                         ),
                         const SizedBox(width: 10),
                         const Text(
@@ -127,7 +115,9 @@ class HomePage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushNamed(context, AppPages.bookingPage);
+                          },
                           child: const Text("Find drivers"),
                         ),
                       )
@@ -136,17 +126,6 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Map Preview
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    "assets/images/map_preview.png",
-                    fit: BoxFit.cover,
-                    height: 160,
-                    width: double.infinity,
-                  ),
-                ),
-                const SizedBox(height: 16),
 
                 // Discount Banner
                 Container(
@@ -177,10 +156,10 @@ class HomePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _serviceIcon("assets/icons/car.png", "Ride"),
-                    _serviceIcon("assets/icons/food.png", "Food"),
-                    _serviceIcon("assets/icons/grocery.png", "Grocery"),
-                    _serviceIcon("assets/icons/reserve.png", "Reserve"),
+                    // _serviceIcon("assets/icons/car.png", "Ride"),
+                    // _serviceIcon("assets/icons/food.png", "Food"),
+                    // _serviceIcon("assets/icons/grocery.png", "Grocery"),
+                    // _serviceIcon("assets/icons/reserve.png", "Reserve"),
                   ],
                 ),
               ],

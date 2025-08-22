@@ -115,7 +115,6 @@ class _NoPageFoundState extends State<NoPageFound>
       height: isWide ? 220 : 180,
       child: Stack(
         children: [
-          // Large "404" with animated shine
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _shine,
