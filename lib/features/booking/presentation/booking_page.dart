@@ -86,7 +86,7 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
                     ListTile(
                       minTileHeight: 0,
                       contentPadding: EdgeInsets.zero,
-                      title: Text('Available Route',style: TextStyle(fontWeight: FontWeight.w400),),
+                      title: Text('Available Route',style: TextStyle(fontWeight: FontWeight.w500),),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 12),
                     ),
                     ...state.routes.asMap().entries.map((route) {
