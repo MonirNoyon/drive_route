@@ -25,6 +25,7 @@ class StrictAutocomplete<T extends Object> extends StatefulWidget {
     this.helperText,
     this.prefixIcon,
     this.suffixIcon,
+    this.onChange,
     this.controller, // if you want to read text externally
   });
 
@@ -60,6 +61,7 @@ class StrictAutocomplete<T extends Object> extends StatefulWidget {
 
   /// Optional validator (runs on the visible text).
   final String? Function(String?)? validator;
+  final  Function(String?)? onChange;
 
   /// Provide a FocusNode if you need control.
   final FocusNode? focusNode;
@@ -214,6 +216,7 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
           focusNode: focusNode,
           enabled: widget.enabled,
           validator: widget.validator,
+          onChanged: widget.onChange,
           style: widget.textStyle ?? const TextStyle(
             color: Colors.white,
           ),
