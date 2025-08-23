@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:car_routing_application/config/api_client/model/common_response.dart';
+import 'package:car_routing_application/config/api_client/update_api_client.dart';
 import 'package:car_routing_application/features/home/data/model/place_details_model.dart';
 import 'package:car_routing_application/features/home/data/model/place_suggestion_model.dart';
 import 'package:http/http.dart' as http;
@@ -20,8 +22,8 @@ abstract class GooglePlacesRemoteDataSource {
 }
 
 class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
-  final http.Client client;
-  GooglePlacesRemoteDataSourceImpl(this.client);
+  ApiClient apiClient;
+  GooglePlacesRemoteDataSourceImpl(this.apiClient);
 
   String get _key {
     final k = dotenv.env['GOOGLE_MAPS_API_KEY'];
@@ -37,6 +39,9 @@ class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
         String? sessionToken,
         String? countryComponent,
       }) async {
+
+    List<PlaceSuggestionModel> suggestions = [];
+
     final params = <String, String>{
       'input': input,
       'key': _key,
@@ -44,27 +49,26 @@ class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
       if (countryComponent != null) 'components': countryComponent,
     };
 
-    final uri = Uri.https(
-      'maps.googleapis.com',
-      '/maps/api/place/autocomplete/json',
-      params,
+    final response = await apiClient.handleRequest<Map>(
+      method: RequestType.GET,
+      endPoint: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+      isCustomUrl: true,
+      queryParams: params,
+      fromJson: null,
     );
 
-    try {
-      final res = await client.get(uri);
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw HttpException('HTTP ${res.statusCode}');
-      }
-      final jsonMap = json.decode(res.body) as Map<String, dynamic>;
-      final status = jsonMap['status'] as String?;
-      if (status == 'OK') {
-        final list = (jsonMap['predictions'] as List).cast<Map<String, dynamic>>();
-        return list.map((e) => PlaceSuggestionModel.fromJson(e)).toList();
-      }
-      throw StateError('Places Autocomplete error: $status');
-    } on SocketException {
-      rethrow;
-    }
+    response.fold(
+          (error) {
+        throw StateError('Place Suggestions error:');
+      },
+          (data) {
+          final predictions = data['predictions'] as List<dynamic>;
+          suggestions = predictions
+              .map((e) => PlaceSuggestionModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+      },
+    );
+    return suggestions;
   }
 
   @override
@@ -72,32 +76,33 @@ class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
       String placeId, {
         String? sessionToken,
       }) async {
-    final params = <String, String>{
-      'place_id': placeId,
-      'key': _key,
-      'fields': 'place_id,name,geometry/location',
-      if (sessionToken != null) 'sessiontoken': sessionToken,
-    };
-
-    final uri = Uri.https(
-      'maps.googleapis.com',
-      '/maps/api/place/details/json',
-      params,
-    );
-
-    try {
-      final res = await client.get(uri);
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw HttpException('HTTP ${res.statusCode}');
-      }
-      final jsonMap = json.decode(res.body) as Map<String, dynamic>;
-      final status = jsonMap['status'] as String?;
-      if (status == 'OK') {
-        return PlaceDetailsModel.fromJson(jsonMap);
-      }
-      throw StateError('Place Details error: $status');
-    } on SocketException {
-      rethrow;
-    }
+    // final params = <String, String>{
+    //   'place_id': placeId,
+    //   'key': _key,
+    //   'fields': 'place_id,name,geometry/location',
+    //   if (sessionToken != null) 'sessiontoken': sessionToken,
+    // };
+    //
+    // final uri = Uri.https(
+    //   'maps.googleapis.com',
+    //   '/maps/api/place/details/json',
+    //   params,
+    // );
+    //
+    // try {
+    //   final res = await client.get(uri);
+    //   if (res.statusCode < 200 || res.statusCode >= 300) {
+    //     throw HttpException('HTTP ${res.statusCode}');
+    //   }
+    //   final jsonMap = json.decode(res.body) as Map<String, dynamic>;
+    //   final status = jsonMap['status'] as String?;
+    //   if (status == 'OK') {
+    //     return PlaceDetailsModel.fromJson(jsonMap);
+    //   }
+    //   throw StateError('Place Details error: $status');
+    // } on SocketException {
+    //   rethrow;
+    // }
+    return PlaceDetailsModel(placeId: '', name: '', lat: 0, lng: 0);
   }
 }

@@ -1,13 +1,11 @@
+import 'package:car_routing_application/config/api_client/update_api_client.dart';
 import 'package:car_routing_application/features/home/data/datasources/google_places_remote_data_sources.dart';
 import 'package:car_routing_application/features/home/data/repositories/location_repository_implementer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-
-
 import '../domain/repositories/location_repository.dart';
 
 
-final httpClientProvider = Provider<http.Client>((ref) => http.Client());
+final httpClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
 
 final googlePlacesRemoteDataSourceProvider =

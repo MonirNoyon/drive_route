@@ -1,14 +1,25 @@
 import 'package:car_routing_application/config/routes/app_pages.dart';
 import 'package:car_routing_application/config/routes/app_routes.dart';
 import 'package:car_routing_application/core/widget/autocomplete_widget.dart';
+import 'package:car_routing_application/core/widget/location_auto_search.dart';
+import 'package:car_routing_application/features/home/domain/providers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    const cities = <City>[
+      City('Dhaka', 'Bangladesh'),
+      City('Chattogram', 'Bangladesh'),
+      City('Cox\'s Bazar', 'Bangladesh'),
+      City('Kolkata', 'India'),
+      City('Singapore', 'Singapore'),
+      City('London', 'UK'),
+    ];
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -68,19 +79,58 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     spacing: 12,
                     children: [
-                      StrictAutocomplete<String>(
-                        items: <String>[
-                          'Apple', 'Apricot', 'Banana', 'Blackberry', 'Blueberry',
-                          'Cherry', 'Grapes', 'Mango', 'Orange', 'Peach', 'Pear',
-                          'Pineapple', 'Plum', 'Strawberry', 'Watermelon',
-                        ],
-                        prefixIcon: const Icon(Icons.location_on_outlined, color: Colors.white70),
-                        hintText: "Pick-up location",
-                        displayStringForOption: (s) => s,
-                        onSelected: (value) {
-                          debugPrint('Selected: $value');
+                //   Padding(
+                //   padding: const EdgeInsets.all(16),
+                //   child: GoogleSearchAutoComplete<City>(
+                //     places: cities,
+                //     // optional: how to show each item (fallback: toString())
+                //     displayStringForOption: (c) => '${c.name}, ${c.country}',
+                //     // optional: customize rows
+                //     itemBuilder: (ctx, city, query) => Padding(
+                //       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                //       child: Row(
+                //         children: [
+                //           const Icon(Icons.place_outlined, size: 20),
+                //           const SizedBox(width: 10),
+                //           Expanded(
+                //             child: Text('${city.name}, ${city.country}',
+                //                 maxLines: 1, overflow: TextOverflow.ellipsis),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //     onSelected: (city) {
+                //       debugPrint('Selected: ${city.name}');
+                //     },
+                //     onChange: (q) {
+                //       debugPrint('Query changed: $q');
+                //     },
+                //     hintText: 'Search cities…',
+                //     // decoration: InputDecoration(...),
+                //     minSearchLength: 1,
+                //     debounceMs: 150,
+                //   ),
+                // ),
+
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(CupertinoIcons.location_solid, color: Colors.white70),
+                          hintText: "Pick-up location",
+                          hintStyle: TextStyle(color: Colors.white70),
+                          border: InputBorder.none,
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: (va)async{
+                          print('object');
+                          final suggestions = await ref.read(getPlaceSuggestionsProvider).call(
+                            va,
+                            sessionToken: 'uuid-1',
+                            countryComponent: 'country:bd',
+                          );
+                          print(suggestions.length);
                         },
                       ),
+
                       StrictAutocomplete<String>(
                         items: <String>[
                           'Apple', 'Apricot', 'Banana', 'Blackberry', 'Blueberry',
@@ -172,4 +222,14 @@ class HomePage extends StatelessWidget {
       ],
     );
   }
+}
+
+
+class City {
+  final String name;
+  final String country;
+  const City(this.name, this.country);
+
+  @override
+  String toString() => '$name, $country';
 }
