@@ -19,5 +19,33 @@ ThemeData appTheme() {
       backgroundColor: Colors.deepPurple,
       foregroundColor: Colors.white,
     ),
+    inputDecorationTheme: InputDecorationTheme(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      filled: true,
+      fillColor: Colors.white10,
+      hintStyle: TextStyle(color: Colors.white54),
+      labelStyle: TextStyle(color: Colors.white70),
+      errorStyle: TextStyle(color: Colors.redAccent),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.white24, width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.white24, width: 2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.white24, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.red, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.red, width: 2),
+      ),
+    ),
   );
 }

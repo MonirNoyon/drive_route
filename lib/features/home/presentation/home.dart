@@ -1,5 +1,7 @@
 import 'package:car_routing_application/config/routes/app_pages.dart';
 import 'package:car_routing_application/config/routes/app_routes.dart';
+import 'package:car_routing_application/core/widget/autocomplete_widget.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -64,46 +66,35 @@ class HomePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
+                    spacing: 12,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.location_on_outlined, color: Colors.white70),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Pick up location",
-                                style: TextStyle(color: Colors.white54),
-                              ),
-                            )
-                          ],
-                        ),
+                      StrictAutocomplete<String>(
+                        items: <String>[
+                          'Apple', 'Apricot', 'Banana', 'Blackberry', 'Blueberry',
+                          'Cherry', 'Grapes', 'Mango', 'Orange', 'Peach', 'Pear',
+                          'Pineapple', 'Plum', 'Strawberry', 'Watermelon',
+                        ],
+                        prefixIcon: const Icon(Icons.location_on_outlined, color: Colors.white70),
+                        suffixIcon: const Icon(Icons.clear, color: Colors.white70),
+                        hintText: "Pick-up location",
+                        displayStringForOption: (s) => s,
+                        onSelected: (value) {
+                          debugPrint('Selected: $value');
+                        },
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.flag_outlined, color: Colors.white70),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Drop-off location",
-                                style: TextStyle(color: Colors.white54),
-                              ),
-                            )
-                          ],
-                        ),
+                      StrictAutocomplete<String>(
+                        items: <String>[
+                          'Apple', 'Apricot', 'Banana', 'Blackberry', 'Blueberry',
+                          'Cherry', 'Grapes', 'Mango', 'Orange', 'Peach', 'Pear',
+                          'Pineapple', 'Plum', 'Strawberry', 'Watermelon',
+                        ],
+                        prefixIcon: const Icon(CupertinoIcons.add_circled_solid, color: Colors.white70),
+                        suffixIcon: const Icon(Icons.clear, color: Colors.white70),
+                        displayStringForOption: (s) => s,
+                        hintText: "Drop-off location",
+                        onSelected: (value) {
+                          debugPrint('Selected: $value');
+                        },
                       ),
                       SizedBox(
                         width: double.infinity,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class RideBookingScreen extends StatefulWidget {
   @override
@@ -14,33 +16,176 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
     zoom: 14,
   );
 
-  // Coordinates for the polyline
-  final List<LatLng> _polylineCoordinates = [
-    LatLng(12.9716, 77.5946), // Start position (Krisna Rajendra)
-    LatLng(12.9700, 77.5950), // End position (Pendrikkan Kilo)
-  ];
+  // Origin & destination (A and B)
+  final LatLng _origin = LatLng(12.9716, 77.5946);
+  final LatLng _destination = LatLng(12.9700, 77.5950);
 
-  // Set to hold polylines
-  Set<Polyline> _polylines = {};
+  // Polylines for all available routes
+  final Set<Polyline> _polylines = {};
+
+  // Route stats
+  int _routeCount = 0;
+  int? _shortestRouteIndex;
+  String? _shortestDistanceText;
+  String? _shortestDurationText;
+
+  // 🔑 Set your Google Maps Directions API key here
+  final String _googleApiKey = 'AIzaSyA6Y6eG8TICGWA-Skcqc5LL4iETdnqLEI8';
 
   @override
   void initState() {
     super.initState();
-    _addPolyline(); // Add polyline when the widget is initialized
+    _fetchRoutes(); // Fetch alternative routes on init
   }
 
-  // Method to add the polyline
-  void _addPolyline() {
-    setState(() {
-      _polylines.add(
+  Future<void> _fetchRoutes() async {
+    try {
+      final uri = Uri.parse(
+        'https://maps.googleapis.com/maps/api/directions/json'
+        '?origin=Gulshan Badda Link Rd, Dhaka 1212, Bangladesh'
+        '&destination=Banani, Dhaka, Bangladesh'
+        '&mode=driving&alternatives=true&key=${_googleApiKey}',
+      );
+
+      final res = await http.get(uri);
+      if (res.statusCode != 200) return;
+
+      final data = json.decode(res.body) as Map<String, dynamic>;
+      final routes = (data['routes'] as List?) ?? [];
+      _renderRoutes(routes);
+    } catch (e) {
+      // You may want to show a snackbar/toast here in a real app
+      debugPrint('Directions error: $e');
+    }
+  }
+
+  // Decode an encoded polyline string into a list of LatLngs
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> poly = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+
+      poly.add(LatLng(lat / 1e5, lng / 1e5));
+    }
+    return poly;
+  }
+
+  void _renderRoutes(List routes) {
+    final List<Color> colors = [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.brown,
+      Colors.cyan,
+    ];
+
+    final Set<Polyline> newPolylines = {};
+
+    int? shortestIdx;
+    int shortestMeters = 1 << 30;
+    String? shortestDistanceText;
+    String? shortestDurationText;
+
+    // To compute bounds
+    double? minLat, minLng, maxLat, maxLng;
+
+    for (int i = 0; i < routes.length; i++) {
+      final r = routes[i] as Map<String, dynamic>;
+      final overview = r['overview_polyline']?['points'] as String?;
+      if (overview == null) continue;
+
+      final points = _decodePolyline(overview);
+
+      // Track bounds
+      for (final p in points) {
+        minLat = (minLat == null) ? p.latitude : (p.latitude < minLat! ? p.latitude : minLat);
+        minLng = (minLng == null) ? p.longitude : (p.longitude < minLng! ? p.longitude : minLng);
+        maxLat = (maxLat == null) ? p.latitude : (p.latitude > maxLat! ? p.latitude : maxLat);
+        maxLng = (maxLng == null) ? p.longitude : (p.longitude > maxLng! ? p.longitude : maxLng);
+      }
+
+      // Find distance/duration from legs
+      int meters = 0;
+      String? distText;
+      String? durText;
+      final legs = (r['legs'] as List?) ?? [];
+      for (final leg in legs) {
+        final m = (leg['distance']?['value'] as int?) ?? 0;
+        meters += m;
+        distText = leg['distance']?['text'] as String? ?? distText;
+        durText = leg['duration']?['text'] as String? ?? durText;
+      }
+
+      if (meters < shortestMeters) {
+        shortestMeters = meters;
+        shortestIdx = i;
+        shortestDistanceText = distText;
+        shortestDurationText = durText;
+      }
+
+      final color = i < colors.length ? colors[i] : Colors.grey;
+
+      newPolylines.add(
         Polyline(
-          polylineId: PolylineId('route'), // Unique ID for the polyline
-          // Polyline color (you can choose any color)
-          width: 5, // Polyline width
-          points: _polylineCoordinates, // List of coordinates for the route
+          polylineId: PolylineId('route_$i'),
+          points: points,
+          width: 5,
+          color: color.withOpacity(0.8),
         ),
       );
+    }
+
+    setState(() {
+      _polylines
+        ..clear()
+        ..addAll(newPolylines.map((p) {
+          // Bump width for the shortest route for visibility
+          if (p.polylineId.value == 'route_${shortestIdx ?? -1}') {
+            return p.copyWith(widthParam: 7, colorParam: Colors.blueAccent);
+          }
+          return p;
+        }));
+      _routeCount = newPolylines.length;
+      _shortestRouteIndex = shortestIdx;
+      _shortestDistanceText = shortestDistanceText;
+      _shortestDurationText = shortestDurationText;
     });
+
+    // Fit camera to bounds
+    if (minLat != null && minLng != null && maxLat != null && maxLng != null) {
+      final bounds = LatLngBounds(
+        southwest: LatLng(minLat, minLng),
+        northeast: LatLng(maxLat, maxLng),
+      );
+      // Using a small delay helps when map is not yet fully created
+      Future.delayed(const Duration(milliseconds: 300), () {
+        mapController.animateCamera(
+          CameraUpdate.newLatLngBounds(bounds, 60),
+        );
+      });
+    }
   }
 
   @override
@@ -72,19 +217,19 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
             width: double.infinity,
             child: GoogleMap(
               initialCameraPosition: _initialPosition,
-              mapType: MapType.hybrid,
+              mapType: MapType.normal,
               onMapCreated: (GoogleMapController controller) {
                 mapController = controller;
               },
               markers: {
                 Marker(
                   markerId: MarkerId("start"),
-                  position: LatLng(12.9716, 77.5946), // Start position
+                  position: _origin,
                   infoWindow: InfoWindow(title: "Krisna Rajendra"),
                 ),
                 Marker(
                   markerId: MarkerId("end"),
-                  position: LatLng(12.9700, 77.5950), // End position
+                  position: _destination,
                   infoWindow: InfoWindow(title: "Pendrikkan Kilo"),
                 ),
               },
@@ -92,6 +237,21 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
             ),
           ),
           SizedBox(height: 16),
+          if (_routeCount > 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Text(
+                    'Routes: ' + _routeCount.toString() +
+                    (_shortestDistanceText != null && _shortestDurationText != null
+                        ? '  •  Shortest: ' + _shortestDistanceText! + ' (' + _shortestDurationText! + ')'
+                        : ''),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
           SizedBox(height: 32),
           Container(
             decoration: BoxDecoration(
@@ -114,16 +274,16 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
                   time: "10:24am | 2 min",
                   isCheaper: true,
                 ),
-                RideOption(
-                  rideName: "Taxita Medium",
-                  price: "\$23.87",
-                  time: "10:24am | 2 min",
-                ),
-                RideOption(
-                  rideName: "Taxita Exclusive",
-                  price: "\$23.87",
-                  time: "10:24am | 2 min",
-                ),
+                // RideOption(
+                //   rideName: "Taxita Medium",
+                //   price: "\$23.87",
+                //   time: "10:24am | 2 min",
+                // ),
+                // RideOption(
+                //   rideName: "Taxita Exclusive",
+                //   price: "\$23.87",
+                //   time: "10:24am | 2 min",
+                // ),
               ],
             ),
           ),
