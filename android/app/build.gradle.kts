@@ -1,9 +1,19 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val mapsApiKey: String = gradleLocalProperties(rootDir,providers)
+    .getProperty("MAPS_API_KEY")
+    ?: System.getenv("MAPS_API_KEY")
+    ?: ""
+
+// Alternatively: from gradle property (-PMAPS_API_KEY=...)
+val mapsApiKeyFromProp = providers.gradleProperty("MAPS_API_KEY").orNull
+val resolvedMapsKey = mapsApiKeyFromProp ?: mapsApiKey
 
 android {
     namespace = "com.example.car_routing_application"
@@ -30,6 +40,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["MAPS_API_KEY"] = resolvedMapsKey
     }
 
     buildTypes {
