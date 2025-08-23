@@ -75,7 +75,6 @@ class HomePage extends StatelessWidget {
                           'Pineapple', 'Plum', 'Strawberry', 'Watermelon',
                         ],
                         prefixIcon: const Icon(Icons.location_on_outlined, color: Colors.white70),
-                        suffixIcon: const Icon(Icons.clear, color: Colors.white70),
                         hintText: "Pick-up location",
                         displayStringForOption: (s) => s,
                         onSelected: (value) {
@@ -89,7 +88,6 @@ class HomePage extends StatelessWidget {
                           'Pineapple', 'Plum', 'Strawberry', 'Watermelon',
                         ],
                         prefixIcon: const Icon(CupertinoIcons.add_circled_solid, color: Colors.white70),
-                        suffixIcon: const Icon(Icons.clear, color: Colors.white70),
                         displayStringForOption: (s) => s,
                         hintText: "Drop-off location",
                         onSelected: (value) {

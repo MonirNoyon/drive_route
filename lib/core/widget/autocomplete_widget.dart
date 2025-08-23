@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 /// A strict autocomplete that only accepts values chosen from the suggestion list.
@@ -80,7 +81,7 @@ class StrictAutocomplete<T extends Object> extends StatefulWidget {
   State<StrictAutocomplete<T>> createState() => _StrictAutocompleteState<T>();
 }
 
-class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplete<T>> {
+class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplete<T>> with WidgetsBindingObserver {
   late final TextEditingController _controller =
       widget.controller ?? TextEditingController();
   late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
@@ -88,10 +89,13 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
   T? _selected;
   String _lastQuery = '';
   DateTime _lastType = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _keyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
 
     if (widget.initialValue != null) {
       _selected = widget.initialValue;
@@ -104,10 +108,24 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
         _enforceSelectionOnly();
       }
     });
+    // Listen to controller changes to update the clear button visibility.
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = MediaQuery.of(context).viewInsets.bottom > 0;
+    if (visible != _keyboardVisible) {
+      _keyboardVisible = visible;
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -115,6 +133,20 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
       _focusNode.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // This fires when the keyboard (IME) shows/hides.
+    final bottomInset = WidgetsBinding.instance.platformDispatcher.views.isNotEmpty
+        ? WidgetsBinding.instance.platformDispatcher.views.first.viewInsets.bottom
+        : 0.0;
+    final visible = bottomInset > 0;
+    if (visible != _keyboardVisible && mounted) {
+      setState(() {
+        _keyboardVisible = visible;
+      });
+    }
   }
 
   void _enforceSelectionOnly() {
@@ -135,6 +167,7 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
         widget.displayStringForOption(o).toLowerCase().contains(q));
   }
 
+
   @override
   Widget build(BuildContext context) {
     return RawAutocomplete<T>(
@@ -142,19 +175,21 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
       textEditingController: _controller,
       displayStringForOption: widget.displayStringForOption,
       optionsBuilder: (TextEditingValue te) {
+        if (!_focusNode.hasFocus || !_keyboardVisible) {
+          return <T>[];
+        }
         if (widget.debounce.inMilliseconds > 0) {
           final now = DateTime.now();
           final diff = now.difference(_lastType);
           _lastType = now;
           _lastQuery = te.text;
           if (diff < widget.debounce) {
-            // Return previous compute (no-op). RawAutocomplete expects a sync Iterable,
-            // so we just compute on the current text anyway.
+
           }
         }
         final opts = widget.items;
         if (te.text.isEmpty) {
-          return opts; // show all when blank (change if you prefer)
+          return opts;
         }
         final filter = widget.filterFn;
         return filter == null
@@ -196,20 +231,34 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
             labelText: widget.labelText,
             helperText: widget.helperText,
             prefixIcon: widget.prefixIcon,
-            suffixIcon: widget.suffixIcon,
+            suffixIcon: widget.suffixIcon ??
+                (_controller.text.isEmpty || !widget.enabled
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear',
+                        icon:  Icon(CupertinoIcons.clear_circled,color: Colors.red,size: 16,),
+                        onPressed: () {
+                          _selected = null;
+                          _controller.clear();
+                          widget.onSelected?.call(null);
+                          setState(() {});
+                        },
+                      )),
           ),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
         final opts = options.toList();
-        return Align(
-          alignment: Alignment.topLeft,
+        if (!_focusNode.hasFocus || !_keyboardVisible) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: EdgeInsets.only(top: 3),
           child: Material(
             elevation: 4,
             borderRadius: BorderRadius.circular(8),
             child: ConstrainedBox(
-              constraints:
-              BoxConstraints(maxHeight: widget.optionsMaxHeight),
+              constraints: BoxConstraints(maxHeight: widget.optionsMaxHeight),
               child: opts.isEmpty
                   ? _buildEmptyState(context)
                   : ListView.separated(
@@ -219,11 +268,7 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
                 const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final option = opts[index];
-                  final label =
-                  widget.displayStringForOption(option);
-                  final isSelected =
-                      _selected != null &&
-                          identical(option, _selected);
+                  final label = widget.displayStringForOption(option);
                   return InkWell(
                     onTap: () => onSelected(option),
                     child: Padding(
@@ -231,10 +276,6 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
                           vertical: 12, horizontal: 12),
                       child: Row(
                         children: [
-                          if (isSelected)
-                            const Icon(Icons.check, size: 18),
-                          if (isSelected)
-                            const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               label,
@@ -256,9 +297,9 @@ class _StrictAutocompleteState<T extends Object> extends State<StrictAutocomplet
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    if (widget.emptyStateBuilder != null) {
-      return widget.emptyStateBuilder!(context);
-    }
+    // if (widget.emptyStateBuilder != null) {
+    //   return widget.emptyStateBuilder!(context);
+    // }
     return const SizedBox(
       height: 56,
       child: Center(
