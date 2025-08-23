@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 550),
-          pageBuilder: (_, __, ___) => const HomePage(),
+          pageBuilder: (_, __, ___) => HomePage(),
           transitionsBuilder: (_, anim, __, child) {
             final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
             return FadeTransition(

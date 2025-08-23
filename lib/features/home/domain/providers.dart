@@ -1,4 +1,5 @@
 import 'package:car_routing_application/features/home/data/providers.dart';
+import 'package:car_routing_application/features/home/domain/entities/place_suggestions.dart';
 import 'package:car_routing_application/features/home/domain/usecases/get_distance_place.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/usecases/get_place_details.dart';
@@ -24,3 +25,5 @@ final getDistanceToPlaceProvider = Provider<GetDistanceToPlace>((ref) {
 final locationRepositoryProviderAlias = Provider<LocationRepository>((ref) {
   return ref.watch(locationRepositoryProvider);
 });
+
+final pickupSuggestionsProvider = StateProvider.autoDispose<List<PlaceSuggestion>>((ref) => []);

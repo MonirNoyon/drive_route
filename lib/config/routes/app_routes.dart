@@ -11,7 +11,7 @@ class AppRoutes {
       case AppPages.splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case AppPages.home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return MaterialPageRoute(builder: (_) =>  HomePage());
       case AppPages.bookingPage:
         return MaterialPageRoute(builder: (_) =>  RideBookingScreen());
       default:

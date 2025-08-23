@@ -2,24 +2,19 @@ import 'package:car_routing_application/config/routes/app_pages.dart';
 import 'package:car_routing_application/config/routes/app_routes.dart';
 import 'package:car_routing_application/core/widget/autocomplete_widget.dart';
 import 'package:car_routing_application/core/widget/location_auto_search.dart';
+import 'package:car_routing_application/features/home/domain/entities/place_suggestions.dart';
 import 'package:car_routing_application/features/home/domain/providers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
+   const HomePage({super.key});
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const cities = <City>[
-      City('Dhaka', 'Bangladesh'),
-      City('Chattogram', 'Bangladesh'),
-      City('Cox\'s Bazar', 'Bangladesh'),
-      City('Kolkata', 'India'),
-      City('Singapore', 'Singapore'),
-      City('London', 'UK'),
-    ];
+    final suggestionsList = ref.watch(pickupSuggestionsProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -79,38 +74,6 @@ class HomePage extends ConsumerWidget {
                   child: Column(
                     spacing: 12,
                     children: [
-                //   Padding(
-                //   padding: const EdgeInsets.all(16),
-                //   child: GoogleSearchAutoComplete<City>(
-                //     places: cities,
-                //     // optional: how to show each item (fallback: toString())
-                //     displayStringForOption: (c) => '${c.name}, ${c.country}',
-                //     // optional: customize rows
-                //     itemBuilder: (ctx, city, query) => Padding(
-                //       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                //       child: Row(
-                //         children: [
-                //           const Icon(Icons.place_outlined, size: 20),
-                //           const SizedBox(width: 10),
-                //           Expanded(
-                //             child: Text('${city.name}, ${city.country}',
-                //                 maxLines: 1, overflow: TextOverflow.ellipsis),
-                //           ),
-                //         ],
-                //       ),
-                //     ),
-                //     onSelected: (city) {
-                //       debugPrint('Selected: ${city.name}');
-                //     },
-                //     onChange: (q) {
-                //       debugPrint('Query changed: $q');
-                //     },
-                //     hintText: 'Search cities…',
-                //     // decoration: InputDecoration(...),
-                //     minSearchLength: 1,
-                //     debounceMs: 150,
-                //   ),
-                // ),
 
                       TextFormField(
                         decoration: const InputDecoration(
@@ -121,25 +84,24 @@ class HomePage extends ConsumerWidget {
                         ),
                         style: const TextStyle(color: Colors.white),
                         onChanged: (va)async{
-                          print('object');
                           final suggestions = await ref.read(getPlaceSuggestionsProvider).call(
                             va,
                             sessionToken: 'uuid-1',
                             countryComponent: 'country:bd',
                           );
+                          ref.read(pickupSuggestionsProvider.notifier).state = suggestions;
                           print(suggestions.length);
                         },
                       ),
 
-                      StrictAutocomplete<String>(
-                        items: <String>[
-                          'Apple', 'Apricot', 'Banana', 'Blackberry', 'Blueberry',
-                          'Cherry', 'Grapes', 'Mango', 'Orange', 'Peach', 'Pear',
-                          'Pineapple', 'Plum', 'Strawberry', 'Watermelon',
-                        ],
+                      StrictAutocomplete<PlaceSuggestion>(
+                        items: [],
                         prefixIcon: const Icon(CupertinoIcons.add_circled_solid, color: Colors.white70),
-                        displayStringForOption: (s) => s,
+                        displayStringForOption: (s) => s.description,
                         hintText: "Drop-off location",
+                        onChange: (value){
+
+                        },
                         onSelected: (value) {
                           debugPrint('Selected: $value');
                         },
@@ -163,6 +125,24 @@ class HomePage extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+                if(suggestionsList.isNotEmpty)...[
+                  ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: suggestionsList.length,
+                      itemBuilder: (ctx,index){
+                        return ListTile(
+                          leading: const Icon(Icons.location_on),
+                          title: Text(suggestionsList[index].description),
+                          onTap: (){
+                            // Handle the selection
+                            print('Selected: ${suggestionsList[index]}');
+                          },
+                        );
+                      }
+                  )
+                ],
+
                 const SizedBox(height: 20),
 
 
