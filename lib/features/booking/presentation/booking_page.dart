@@ -4,6 +4,20 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+class _RouteInfo {
+  final int index;
+  final int meters;
+  final String distanceText;
+  final String durationText;
+
+  _RouteInfo({
+    required this.index,
+    required this.meters,
+    required this.distanceText,
+    required this.durationText,
+  });
+}
+
 class RideBookingScreen extends StatefulWidget {
   const RideBookingScreen({
     super.key,
@@ -23,11 +37,9 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
 
    late CameraPosition _initialPosition;
 
-  // Origin & destination (A and B)
   late LatLng _origin;
   late LatLng _destination;
 
-  // Polylines for all available routes
   final Set<Polyline> _polylines = {};
 
   // Route stats
@@ -36,6 +48,14 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   String? _shortestDistanceText;
   String? _shortestDurationText;
 
+  // Sorted list of routes (shortest first)
+  final List<_RouteInfo> _routesInfo = [];
+
+  // Currently selected route (for highlighting); defaults to shortest
+  int? _selectedRouteIndex;
+  // Bounds for each route (same order as routes list)
+  final List<LatLngBounds> _routeBounds = [];
+
   // 🔑 Set your Google Maps Directions API key here
   final String _googleApiKey = 'AIzaSyA6Y6eG8TICGWA-Skcqc5LL4iETdnqLEI8';
 
@@ -43,8 +63,8 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   void initState() {
     super.initState();
     _initialPosition = CameraPosition(
-      target: LatLng(widget.pickUpPlaceDetails.lat, 77.5946), // Bangalore coordinates
-      zoom: 14,
+      target: LatLng(widget.pickUpPlaceDetails.lat, widget.pickUpPlaceDetails.lng),
+      zoom: 10,
     );
     _origin = LatLng(widget.pickUpPlaceDetails.lat, widget.pickUpPlaceDetails.lng);
     _destination = LatLng(widget.dropOffPlaceDetails.lat, widget.dropOffPlaceDetails.lng);
@@ -104,6 +124,8 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   }
 
   void _renderRoutes(List routes) {
+    final List<_RouteInfo> routeInfoList = [];
+
     final List<Color> colors = [
       Colors.blue,
       Colors.red,
@@ -115,14 +137,12 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
     ];
 
     final Set<Polyline> newPolylines = {};
+    final List<LatLngBounds> routeBoundsTemp = [];
 
     int? shortestIdx;
     int shortestMeters = 1 << 30;
     String? shortestDistanceText;
     String? shortestDurationText;
-
-    // To compute bounds
-    double? minLat, minLng, maxLat, maxLng;
 
     for (int i = 0; i < routes.length; i++) {
       final r = routes[i] as Map<String, dynamic>;
@@ -131,12 +151,21 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
 
       final points = _decodePolyline(overview);
 
-      // Track bounds
+      // Per-route bounds
+      double? rMinLat, rMinLng, rMaxLat, rMaxLng;
       for (final p in points) {
-        minLat = (minLat == null) ? p.latitude : (p.latitude < minLat! ? p.latitude : minLat);
-        minLng = (minLng == null) ? p.longitude : (p.longitude < minLng! ? p.longitude : minLng);
-        maxLat = (maxLat == null) ? p.latitude : (p.latitude > maxLat! ? p.latitude : maxLat);
-        maxLng = (maxLng == null) ? p.longitude : (p.longitude > maxLng! ? p.longitude : maxLng);
+        rMinLat = (rMinLat == null) ? p.latitude : (p.latitude < rMinLat ? p.latitude : rMinLat);
+        rMinLng = (rMinLng == null) ? p.longitude : (p.longitude < rMinLng ? p.longitude : rMinLng);
+        rMaxLat = (rMaxLat == null) ? p.latitude : (p.latitude > rMaxLat ? p.latitude : rMaxLat);
+        rMaxLng = (rMaxLng == null) ? p.longitude : (p.longitude > rMaxLng ? p.longitude : rMaxLng);
+      }
+      if (rMinLat != null && rMinLng != null && rMaxLat != null && rMaxLng != null) {
+        routeBoundsTemp.add(
+          LatLngBounds(
+            southwest: LatLng(rMinLat, rMinLng),
+            northeast: LatLng(rMaxLat, rMaxLng),
+          ),
+        );
       }
 
       // Find distance/duration from legs
@@ -150,6 +179,14 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
         distText = leg['distance']?['text'] as String? ?? distText;
         durText = leg['duration']?['text'] as String? ?? durText;
       }
+      routeInfoList.add(
+        _RouteInfo(
+          index: i,
+          meters: meters,
+          distanceText: distText ?? '${(meters / 1000).toStringAsFixed(1)} km',
+          durationText: durText ?? '',
+        ),
+      );
 
       if (meters < shortestMeters) {
         shortestMeters = meters;
@@ -170,39 +207,68 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
       );
     }
 
+    // Sort routes by distance (shortest first)
+    routeInfoList.sort((a, b) => a.meters.compareTo(b.meters));
+    if (routeInfoList.isNotEmpty) {
+      shortestIdx = routeInfoList.first.index;
+      shortestDistanceText = routeInfoList.first.distanceText;
+      shortestDurationText = routeInfoList.first.durationText;
+    }
+
     setState(() {
       _polylines
         ..clear()
         ..addAll(newPolylines.map((p) {
-          // Bump width for the shortest route for visibility
-          if (p.polylineId.value == 'route_${shortestIdx ?? -1}') {
+          if (p.polylineId.value == 'route_${_selectedRouteIndex ?? -1}') {
             return p.copyWith(widthParam: 7, colorParam: Colors.blueAccent);
           }
-          return p;
+          return p.copyWith(widthParam: 5, colorParam: p.color.withOpacity(0.8));
         }));
       _routeCount = newPolylines.length;
       _shortestRouteIndex = shortestIdx;
       _shortestDistanceText = shortestDistanceText;
       _shortestDurationText = shortestDurationText;
+      // Default selection to shortest route initially
+      _selectedRouteIndex = shortestIdx;
+      _routeBounds
+        ..clear()
+        ..addAll(routeBoundsTemp);
+      _routesInfo
+        ..clear()
+        ..addAll(routeInfoList);
+    });
+  }
+
+  void _applyPolylineHighlight({bool animate = true}) {
+    final selectedId = 'route_${_selectedRouteIndex ?? -1}';
+    final updated = _polylines.map((p) {
+      if (p.polylineId.value == selectedId) {
+        return p.copyWith(widthParam: 7, colorParam: Colors.blueAccent);
+      }
+      return p.copyWith(widthParam: 5, colorParam: p.color.withOpacity(0.8));
+    }).toSet();
+    setState(() {
+      _polylines
+        ..clear()
+        ..addAll(updated);
     });
 
-    // Fit camera to bounds
-    if (minLat != null && minLng != null && maxLat != null && maxLng != null) {
-      final bounds = LatLngBounds(
-        southwest: LatLng(minLat, minLng),
-        northeast: LatLng(maxLat, maxLng),
-      );
-      // Using a small delay helps when map is not yet fully created
-      Future.delayed(const Duration(milliseconds: 300), () {
-        mapController.animateCamera(
-          CameraUpdate.newLatLngBounds(bounds, 60),
-        );
+    if (animate && _selectedRouteIndex != null && _selectedRouteIndex! < _routeBounds.length) {
+      final b = _routeBounds[_selectedRouteIndex!];
+      Future.delayed(const Duration(milliseconds: 150), () {
+        mapController.animateCamera(CameraUpdate.newLatLngBounds(b, 60));
       });
     }
   }
 
+  void _selectRoute(int index) {
+    _selectedRouteIndex = index;
+    _applyPolylineHighlight();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -223,11 +289,11 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
         ],
       ),
       body: Column(
+        spacing: 5,
         children: [
           // Google Map
-          SizedBox(
-            height: 550,
-            width: double.infinity,
+          Expanded(
+            flex: 8,
             child: GoogleMap(
               initialCameraPosition: _initialPosition,
               mapType: MapType.normal,
@@ -238,138 +304,43 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
                 Marker(
                   markerId: MarkerId("start"),
                   position: _origin,
-                  infoWindow: InfoWindow(title: "Krisna Rajendra"),
+                  infoWindow: InfoWindow(title: "Pickup points"),
                 ),
                 Marker(
                   markerId: MarkerId("end"),
                   position: _destination,
-                  infoWindow: InfoWindow(title: "Pendrikkan Kilo"),
+                  infoWindow: InfoWindow(title: "Destination points"),
                 ),
               },
-              polylines: _polylines, // Set the polylines to be displayed on the map
+              polylines: _polylines,
             ),
           ),
-          SizedBox(height: 16),
-          if (_routeCount > 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Text(
-                    'Routes: ' + _routeCount.toString() +
-                    (_shortestDistanceText != null && _shortestDurationText != null
-                        ? '  •  Shortest: ' + _shortestDistanceText! + ' (' + _shortestDurationText! + ')'
-                        : ''),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ],
+          if (_routesInfo.isNotEmpty)
+            Expanded(
+              flex: 6,
+              child: ListView.builder(
+                itemCount: _routesInfo.length,
+                itemBuilder: (context, idx) {
+                  final r = _routesInfo[idx];
+                  final isShortest = idx == 0;
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    minTileHeight: 0,
+                    leading: CircleAvatar(child: Text('${idx + 1}')),
+                    title: Text(
+                      '${r.distanceText}  •  ${r.durationText}',
+                      style: TextStyle(fontWeight: r.index == _selectedRouteIndex ? FontWeight.w700 : FontWeight.w500),
+                    ),
+                    subtitle: Text('Route ${r.index + 1}${isShortest ? ' • Shortest' : ''}'),
+                    trailing: isShortest ? const Icon(Icons.check_circle, color: Colors.green) : null,
+                    onTap: () => _selectRoute(r.index),
+                  );
+                },
               ),
             ),
-          SizedBox(height: 32),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
-              boxShadow: [BoxShadow(blurRadius: 6, color: Colors.grey)],
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Choose a ride",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                RideOption(
-                  rideName: "Taxita Regular",
-                  price: "\$23.87",
-                  time: "10:24am | 2 min",
-                  isCheaper: true,
-                ),
-                // RideOption(
-                //   rideName: "Taxita Medium",
-                //   price: "\$23.87",
-                //   time: "10:24am | 2 min",
-                // ),
-                // RideOption(
-                //   rideName: "Taxita Exclusive",
-                //   price: "\$23.87",
-                //   time: "10:24am | 2 min",
-                // ),
-              ],
-            ),
-          ),
+
         ],
       ),
     );
-  }
-}
-
-class RideOption extends StatelessWidget {
-  final String rideName;
-  final String price;
-  final String time;
-  final bool isCheaper;
-
-  const RideOption({
-    required this.rideName,
-    required this.price,
-    required this.time,
-    this.isCheaper = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(rideName),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (isCheaper)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    "Cheaper",
-                    style: TextStyle(fontSize: 12, color: Colors.green),
-                  ),
-                ),
-              SizedBox(height: 4),
-              Text(
-                price,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(time, style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-class fsd extends StatefulWidget {
-  const fsd({super.key});
-
-  @override
-  State<fsd> createState() => _fsdState();
-}
-
-class _fsdState extends State<fsd> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
   }
 }
