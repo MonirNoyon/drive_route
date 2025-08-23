@@ -2,8 +2,11 @@ import 'package:car_routing_application/config/routes/app_pages.dart';
 import 'package:car_routing_application/config/routes/app_routes.dart';
 import 'package:car_routing_application/config/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   runApp(const MyApp());
 }
 
