@@ -1,5 +1,6 @@
 import 'package:car_routing_application/features/booking/presentation/controller/route_controller.dart';
 import 'package:car_routing_application/features/booking/presentation/states/route_state.dart';
+import 'package:car_routing_application/features/booking/presentation/widget/route_widget.dart';
 import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,17 +94,16 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
                       final ro = route;
                       final isShortest = route.key == 0;
                       final isSelected = ro.key == state.selectedIndex;
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(child: Text('${route.key + 1}')),
-                        title: Text(
-                          '${ro.value.distanceText}  •  ${ro.value.durationText}',
-                          style: TextStyle(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
-                        ),
-                        subtitle: Text('Route ${route.key + 1}${isShortest ? ' • Shortest' : ''}'),
-                        trailing: isShortest ? const Icon(Icons.check_circle, color: Colors.green) : null,
-                        onTap: () => controller.selectRoute(route.key),
-                      );
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                          child: RideOptionCard(
+                            isShortest: isShortest,
+                            title: 'Route ${route.key + 1}',
+                            timeText: ro.value.distanceText,
+                            etaText: ro.value.durationText,
+                            priceText: '\$${(ro.value.meters / 1000 * 1.5).toStringAsFixed(2)}',
+                            onTap: () => controller.selectRoute(route.key),
+                          ));
                     }),
                   ],
                 ),
