@@ -27,3 +27,4 @@ final locationRepositoryProviderAlias = Provider<LocationRepository>((ref) {
 });
 
 final pickupSuggestionsProvider = StateProvider.autoDispose<List<PlaceSuggestion>>((ref) => []);
+final dropOffSuggestionsProvider = StateProvider.autoDispose<List<PlaceSuggestion>>((ref) => []);
