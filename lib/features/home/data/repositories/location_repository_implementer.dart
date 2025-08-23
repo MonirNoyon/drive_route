@@ -25,7 +25,7 @@ class LocationRepositoryImpl implements LocationRepository {
   }
 
   @override
-  Future<PlaceDetails> getPlaceDetails(
+  Future<PlaceDetails?> getPlaceDetails(
       String placeId, {
         String? sessionToken,
       }) {

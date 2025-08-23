@@ -1,24 +1,31 @@
+import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class RideBookingScreen extends StatefulWidget {
+  const RideBookingScreen({
+    super.key,
+    required this.pickUpPlaceDetails,
+    required this.dropOffPlaceDetails,
+  });
+
+  final PlaceDetails pickUpPlaceDetails;
+  final PlaceDetails dropOffPlaceDetails;
+
   @override
-  _RideBookingScreenState createState() => _RideBookingScreenState();
+  State<RideBookingScreen> createState() => _RideBookingScreenState();
 }
 
 class _RideBookingScreenState extends State<RideBookingScreen> {
   late GoogleMapController mapController;
 
-  final CameraPosition _initialPosition = CameraPosition(
-    target: LatLng(12.9716, 77.5946), // Bangalore coordinates
-    zoom: 14,
-  );
+   late CameraPosition _initialPosition;
 
   // Origin & destination (A and B)
-  final LatLng _origin = LatLng(12.9716, 77.5946);
-  final LatLng _destination = LatLng(12.9700, 77.5950);
+  late LatLng _origin;
+  late LatLng _destination;
 
   // Polylines for all available routes
   final Set<Polyline> _polylines = {};
@@ -35,6 +42,12 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   @override
   void initState() {
     super.initState();
+    _initialPosition = CameraPosition(
+      target: LatLng(widget.pickUpPlaceDetails.lat, 77.5946), // Bangalore coordinates
+      zoom: 14,
+    );
+    _origin = LatLng(widget.pickUpPlaceDetails.lat, widget.pickUpPlaceDetails.lng);
+    _destination = LatLng(widget.dropOffPlaceDetails.lat, widget.dropOffPlaceDetails.lng);
     _fetchRoutes(); // Fetch alternative routes on init
   }
 
@@ -42,8 +55,8 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
     try {
       final uri = Uri.parse(
         'https://maps.googleapis.com/maps/api/directions/json'
-        '?origin=Gulshan Badda Link Rd, Dhaka 1212, Bangladesh'
-        '&destination=Banani, Dhaka, Bangladesh'
+        '?origin=${_origin.latitude},${_origin.longitude}'
+        '&destination=${_destination.latitude},${_destination.longitude}'
         '&mode=driving&alternatives=true&key=${_googleApiKey}',
       );
 
@@ -343,5 +356,20 @@ class RideOption extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+
+class fsd extends StatefulWidget {
+  const fsd({super.key});
+
+  @override
+  State<fsd> createState() => _fsdState();
+}
+
+class _fsdState extends State<fsd> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

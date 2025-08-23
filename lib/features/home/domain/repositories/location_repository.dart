@@ -9,7 +9,7 @@ abstract class LocationRepository {
         String? countryComponent,
       });
 
-  Future<PlaceDetails> getPlaceDetails(
+  Future<PlaceDetails?> getPlaceDetails(
       String placeId, {
         String? sessionToken,
       });

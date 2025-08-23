@@ -5,7 +5,7 @@ class GetPlaceDetails {
   final LocationRepository repo;
   GetPlaceDetails(this.repo);
 
-  Future<PlaceDetails> call(String placeId, {String? sessionToken}) {
+  Future<PlaceDetails?> call(String placeId, {String? sessionToken}) {
     return repo.getPlaceDetails(placeId, sessionToken: sessionToken);
   }
 }

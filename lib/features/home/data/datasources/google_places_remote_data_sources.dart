@@ -15,7 +15,7 @@ abstract class GooglePlacesRemoteDataSource {
         String? countryComponent,
       });
 
-  Future<PlaceDetailsModel> fetchPlaceDetails(
+  Future<PlaceDetailsModel?> fetchPlaceDetails(
       String placeId, {
         String? sessionToken,
       });
@@ -72,37 +72,36 @@ class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
   }
 
   @override
-  Future<PlaceDetailsModel> fetchPlaceDetails(
+  Future<PlaceDetailsModel?> fetchPlaceDetails(
       String placeId, {
         String? sessionToken,
       }) async {
-    // final params = <String, String>{
-    //   'place_id': placeId,
-    //   'key': _key,
-    //   'fields': 'place_id,name,geometry/location',
-    //   if (sessionToken != null) 'sessiontoken': sessionToken,
-    // };
-    //
-    // final uri = Uri.https(
-    //   'maps.googleapis.com',
-    //   '/maps/api/place/details/json',
-    //   params,
-    // );
-    //
-    // try {
-    //   final res = await client.get(uri);
-    //   if (res.statusCode < 200 || res.statusCode >= 300) {
-    //     throw HttpException('HTTP ${res.statusCode}');
-    //   }
-    //   final jsonMap = json.decode(res.body) as Map<String, dynamic>;
-    //   final status = jsonMap['status'] as String?;
-    //   if (status == 'OK') {
-    //     return PlaceDetailsModel.fromJson(jsonMap);
-    //   }
-    //   throw StateError('Place Details error: $status');
-    // } on SocketException {
-    //   rethrow;
-    // }
-    return PlaceDetailsModel(placeId: '', name: '', lat: 0, lng: 0);
+    final params = <String, String>{
+      'key': _key,
+      'place_id': placeId,
+    };
+    PlaceDetailsModel? placeDetails;
+    final response = await apiClient.handleRequest<Map>(
+      method: RequestType.GET,
+      endPoint: "https://maps.googleapis.com/maps/api/place/details/json",
+      isCustomUrl: true,
+      queryParams: params,
+    );
+    response.fold(
+          (error) {
+        throw StateError('Place Details error:');
+      },
+          (success) {
+            if(success.containsKey('result') && success["result"].isNotEmpty){
+              placeDetails =  PlaceDetailsModel(
+                placeId: placeId.isNotEmpty ? placeId : success["result"]["place_id"],
+                name: success["result"]["formatted_address"],
+                lat: success["result"]["geometry"]?["location"]?["lat"],
+                lng: success["result"]["geometry"]?["location"]?["lng"],
+              );
+            }
+      },
+    );
+    return placeDetails;
   }
 }

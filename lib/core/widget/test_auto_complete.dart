@@ -82,7 +82,7 @@ class _LocationSearchWidgetState extends ConsumerState<LocationSearchWidget> {
                   title: Text(_placeList[index].description),
                   onTap: () async {
                     String? placeId = _placeList[index].placeId;
-                    PlaceDetails details = await ref.read(getPlaceDetailsProvider).call(placeId, sessionToken: 'uuid-1');
+                    PlaceDetails? details = await ref.read(getPlaceDetailsProvider).call(placeId, sessionToken: 'uuid-1');
                     _controller.text = _placeList[index].description;
                     FocusNode().unfocus();
                     _removeOverlay();

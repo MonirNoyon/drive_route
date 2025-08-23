@@ -1,12 +1,7 @@
 import 'package:car_routing_application/config/routes/app_pages.dart';
-import 'package:car_routing_application/core/widget/auto_complete.dart';
-import 'package:car_routing_application/core/widget/autocomplete_widget.dart';
-import 'package:car_routing_application/core/widget/custom_text_form_field.dart';
 import 'package:car_routing_application/core/widget/test_auto_complete.dart';
-import 'package:car_routing_application/features/home/domain/entities/place_suggestions.dart';
+import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
 import 'package:car_routing_application/features/home/domain/providers.dart';
-import 'package:car_routing_application/features/home/presentation/widget/location_suggestion_list.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,6 +15,9 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _pickupController = TextEditingController();
   final TextEditingController _dropOffController = TextEditingController();
+
+  PlaceDetails? pickUpPlaceDetails;
+  PlaceDetails? dropOffPlaceDetails;
 
 
   @override
@@ -96,73 +94,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                       LocationSearchWidget(
                           prefixIcon: Icon(Icons.my_location,color: Colors.white,),
                           hintText: "Pick-up location",
-                          onSuggestedData: (value){}
+                          onSuggestedData: (value){
+                            pickUpPlaceDetails = value;
+                          }
                       ),
                       LocationSearchWidget(
                           prefixIcon: Icon(Icons.place_outlined,color: Colors.white,),
                           hintText: "Drop-off location",
-                          onSuggestedData: (value){}
+                          onSuggestedData: (value){
+                            dropOffPlaceDetails = value;
+                          }
                       ),
-                      // AppTextFormField(
-                      //   controller: _pickupController,
-                      //   hintText: "Pick-up location",
-                      //   prefixIcon: const Icon(CupertinoIcons.location_solid, color: Colors.white70),
-                      //   onChanged: (va)async{
-                      //     final suggestions = await ref.read(getPlaceSuggestionsProvider).call(
-                      //       va,
-                      //       sessionToken: 'uuid-1',
-                      //       countryComponent: 'country:bd',
-                      //     );
-                      //     ref.read(pickupSuggestionsProvider.notifier).state = suggestions;
-                      //     print(suggestions.length);
-                      //   },
-                      // ),
-                      // // if(pickupSuggestionsList.isNotEmpty)
-                      // //   Expanded(child: SuggestionList(items: pickupSuggestionsList, onSelect: (value){})),
-                      //
-                      // AppTextFormField(
-                      //   controller: _dropOffController,
-                      //   hintText: "Drop-off location",
-                      //   prefixIcon: const Icon(CupertinoIcons.add_circled_solid, color: Colors.white70),
-                      //   onChanged: (va)async{
-                      //     final suggestions = await ref.read(getPlaceSuggestionsProvider).call(
-                      //       va,
-                      //       sessionToken: 'uuid-1',
-                      //       countryComponent: 'country:bd',
-                      //     );
-                      //     ref.read(dropOffSuggestionsProvider.notifier).state = suggestions;
-                      //     print(suggestions.length);
-                      //   },
-                      // ),
-
-
-
-                      // StrictAutocomplete<PlaceSuggestion>(
-                      //   items: [],
-                      //   prefixIcon: const Icon(CupertinoIcons.add_circled_solid, color: Colors.white70),
-                      //   displayStringForOption: (s) => s.description,
-                      //   hintText: "Drop-off location",
-                      //   onChange: (value){
-                      //
-                      //   },
-                      //   onSelected: (value) {
-                      //     debugPrint('Selected: $value');
-                      //   },
-                      // ),
-
-                      // GoogleAutoCompLocSuggestion(
-                      //     items: pickupSuggestionsList,
-                      //     onChange: (va)async{
-                      //       final suggestions = await ref.read(getPlaceSuggestionsProvider).call(
-                      //         va,
-                      //         sessionToken: 'uuid-1',
-                      //         countryComponent: 'country:bd',
-                      //       );
-                      //       ref.read(pickupSuggestionsProvider.notifier).state = suggestions;
-                      //       print(suggestions.length);
-                      //     },
-                      //     onSelected: (va){}
-                      // ),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -174,7 +116,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ),
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, AppPages.bookingPage);
+                            FocusNode().unfocus();
+                            Navigator.pushNamed(context, AppPages.bookingPage,arguments: {
+                              "pick_up": pickUpPlaceDetails,
+                              "drop_off": dropOffPlaceDetails,
+                            });
                           },
                           child: const Text("Find drivers"),
                         ),
@@ -206,14 +152,4 @@ class _HomePageState extends ConsumerState<HomePage> {
       ],
     );
   }
-}
-
-
-class City {
-  final String name;
-  final String country;
-  const City(this.name, this.country);
-
-  @override
-  String toString() => '$name, $country';
 }
