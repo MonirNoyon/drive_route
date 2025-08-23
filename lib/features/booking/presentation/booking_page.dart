@@ -51,12 +51,9 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          style: IconButton.styleFrom(backgroundColor: Colors.black.withOpacity(0.5)),
+          style: IconButton.styleFrom(backgroundColor: Colors.black.withValues(alpha: 0.5)),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
-        ],
       ),
       body: Column(
         children: [
@@ -82,24 +79,34 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
           if (state.routes.isNotEmpty)
             Expanded(
               flex: 6,
-              child: ListView.builder(
-                itemCount: state.routes.length,
-                itemBuilder: (context, idx) {
-                  final ro = state.routes[idx];
-                  final isShortest = idx == 0;
-                  final isSelected = ro.index == state.selectedIndex;
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(child: Text('${idx + 1}')),
-                    title: Text(
-                      '${ro.distanceText}  •  ${ro.durationText}',
-                      style: TextStyle(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    ListTile(
+                      minTileHeight: 0,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('Available Route',style: TextStyle(fontWeight: FontWeight.w400),),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 12),
                     ),
-                    subtitle: Text('Route ${ro.index + 1}${isShortest ? ' • Shortest' : ''}'),
-                    trailing: isShortest ? const Icon(Icons.check_circle, color: Colors.green) : null,
-                    onTap: () => controller.selectRoute(ro.index),
-                  );
-                },
+                    ...state.routes.asMap().entries.map((route) {
+                      final ro = route;
+                      final isShortest = route.key == 0;
+                      final isSelected = ro.key == state.selectedIndex;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(child: Text('${route.key + 1}')),
+                        title: Text(
+                          '${ro.value.distanceText}  •  ${ro.value.durationText}',
+                          style: TextStyle(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+                        ),
+                        subtitle: Text('Route ${route.key + 1}${isShortest ? ' • Shortest' : ''}'),
+                        trailing: isShortest ? const Icon(Icons.check_circle, color: Colors.green) : null,
+                        onTap: () => controller.selectRoute(route.key),
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
         ],
@@ -129,7 +136,7 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
         polylineId: PolylineId('route_${ro.index}'),
         points: pts,
         width: highlighted ? 7 : 5,
-        color: highlighted ? Colors.blueAccent : baseColor.withOpacity(0.8),
+        color: highlighted ? Colors.blueAccent : baseColor.withValues(alpha: 0.8),
       ));
     }
     return lines;
