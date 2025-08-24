@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     )..forward();
 
     // Simulate init work, then navigate
-    Future.delayed(const Duration(milliseconds: 15000), () async {
+    Future.delayed(const Duration(milliseconds: 1500), () async {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
