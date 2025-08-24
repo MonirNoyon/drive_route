@@ -1,5 +1,6 @@
 import 'package:car_routing_application/config/routes/app_pages.dart';
-import 'package:car_routing_application/core/widget/test_auto_complete.dart';
+import 'package:car_routing_application/core/widget/app_button.dart';
+import 'package:car_routing_application/core/widget/location_search_widget.dart';
 import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
 import 'package:car_routing_application/features/home/domain/providers.dart';
 import 'package:flutter/material.dart';
@@ -102,17 +103,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                               dropOffPlaceDetails = value;
                             }
                         ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              backgroundColor: Colors.green,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
+                        AppButton.fill(
+                            label: 'Find Route',
+                            onPressed: (){
                               if(formKey.currentState!.validate()){
                                 FocusNode().unfocus();
                                 Navigator.pushNamed(context, AppPages.bookingPage,arguments: {
@@ -120,10 +113,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   "drop_off": dropOffPlaceDetails,
                                 });
                               }
-                            },
-                            child: const Text("Find drivers"),
-                          ),
-                        )
+                            }
+                        ),
                       ],
                     ),
                   ),

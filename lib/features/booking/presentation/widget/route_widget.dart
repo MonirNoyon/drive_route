@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 class RideOptionCard extends StatelessWidget {
   const RideOptionCard({
     super.key,
-    this.title = 'Taxita Reguler',
-    this.timeText = '10.24am',
-    this.etaText = '2 min',
-    this.priceText = '\$23.87',
+    this.title = '',
+    this.timeText = '',
+    this.etaText = '',
+    this.priceText = '',
     this.pillText = 'Shortest',
     this.brandColor = const Color(0xFF28C16D),
     this.width = 360,
