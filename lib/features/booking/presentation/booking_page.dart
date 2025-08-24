@@ -93,7 +93,6 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
                     ...state.routes.asMap().entries.map((route) {
                       final ro = route;
                       final isShortest = route.key == 0;
-                      final isSelected = ro.key == state.selectedIndex;
                       return Padding(
                         padding: EdgeInsets.only(bottom: 10),
                           child: RideOptionCard(
