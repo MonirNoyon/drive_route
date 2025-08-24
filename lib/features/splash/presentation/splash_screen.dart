@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     )..forward();
 
     // Simulate init work, then navigate
-    Future.delayed(const Duration(milliseconds: 1500), () async {
+    Future.delayed(const Duration(milliseconds: 15000), () async {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
@@ -80,6 +80,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         ),
         child: SafeArea(
           child: Stack(
+            alignment: Alignment.topCenter,
             children: [
               // Animated route background
               Positioned.fill(
@@ -89,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     return CustomPaint(
                       painter: RoutePainter(
                         dashPhase: _dashController.value,
-                        routeColor: cs.primary.withOpacity(isDark ? 0.75 : 0.9),
+                        routeColor: cs.primary.withValues(alpha: isDark ? 0.75 : 0.9),
                         waypointColor: cs.secondary,
                       ),
                     );
@@ -99,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
               // Foreground branding
               Align(
-                alignment: Alignment.center,
+                alignment: Alignment.topCenter,
                 child: FadeTransition(
                   opacity: CurvedAnimation(
                     parent: _fadeController,
@@ -148,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Smart routing for fleets',
+                        'Smart ride shearing application',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: isDark
                               ? Colors.white70
@@ -156,14 +157,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Subtle progress indicator
-                      SizedBox(
-                        width: 120,
-                        child: LinearProgressIndicator(
-                          minHeight: 5,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
+
                     ],
                   ),
                 ),
@@ -200,8 +194,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 }
 
-/// A custom painter that draws a stylized "route" with animated dashed stroke,
-/// plus origin/destination pins. No external packages needed.
 class RoutePainter extends CustomPainter {
   RoutePainter({
     required this.dashPhase,
@@ -209,7 +201,7 @@ class RoutePainter extends CustomPainter {
     required this.waypointColor,
   });
 
-  /// 0..1, shifts the dash pattern to create motion
+
   final double dashPhase;
   final Color routeColor;
   final Color waypointColor;
@@ -222,7 +214,7 @@ class RoutePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..color = routeColor;
 
-    // Create a nice bezier route path with gentle curves
+
     final path = Path();
     final start = Offset(size.width * 0.12, size.height * 0.70);
     final mid1  = Offset(size.width * 0.35, size.height * 0.45);
@@ -241,7 +233,6 @@ class RoutePainter extends CustomPainter {
       end.dx,             end.dy,
     );
 
-    // Draw dashed path with animated offset
     _drawDashedPath(canvas, path, paint, dashArray: const [12, 10], phase: dashPhase);
 
     // Draw origin/destination pins
