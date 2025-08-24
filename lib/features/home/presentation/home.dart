@@ -4,11 +4,10 @@ import 'package:car_routing_application/core/widget/app_button.dart';
 import 'package:car_routing_application/core/widget/app_text.dart';
 import 'package:car_routing_application/core/widget/location_search_widget.dart';
 import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
-import 'package:car_routing_application/features/home/domain/providers.dart';
+import 'package:car_routing_application/features/home/presentation/widget/discount_widget.dart';
 import 'package:car_routing_application/features/home/presentation/widget/my_current_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends ConsumerStatefulWidget {
    const HomePage({super.key});
@@ -23,13 +22,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   PlaceDetails? dropOffPlaceDetails;
 
   final formKey = GlobalKey<FormState>();
-
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +117,22 @@ class _HomePageState extends ConsumerState<HomePage> {
               const SizedBox(height: 20),
 
               MyCurrentLocation(),
+              SizedBox(height: AppValues.margin_12),
+              PromoBannerCard(
+                  title: 'Start your first ride',
+                  subtitle: 'Flat 20% off on your first ride'
+              ),
+              const SizedBox(height: 12),
+
+              const ServicesPanel(
+                title: 'Services',
+                items: [
+                  ServiceItem(icon: Icons.local_taxi, label: 'Ride'),
+                  ServiceItem(icon: Icons.restaurant_outlined, label: 'Food'),
+                  ServiceItem(icon: Icons.shopping_cart_outlined, label: 'Grocery'),
+                  ServiceItem(icon: Icons.event_available_outlined, label: 'Reserve'),
+                ],
+              ),
 
             ],
           ),
