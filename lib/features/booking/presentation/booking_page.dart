@@ -2,6 +2,7 @@ import 'package:car_routing_application/features/booking/presentation/controller
 import 'package:car_routing_application/features/booking/presentation/states/route_state.dart';
 import 'package:car_routing_application/features/booking/presentation/widget/route_widget.dart';
 import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
+import 'package:car_routing_application/features/home/domain/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -44,6 +45,8 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
     final origin = LatLng(widget.pickUpPlaceDetails.lat, widget.pickUpPlaceDetails.lng);
     final destination = LatLng(widget.dropOffPlaceDetails.lat, widget.dropOffPlaceDetails.lng);
 
+    final mapState = ref.watch(mapControllerProvider);
+
     final polylines = _buildPolylines(state);
 
     return Scaffold(
@@ -69,6 +72,17 @@ class _RideBookingScreenState extends ConsumerState<RideBookingScreen> {
                 Marker(markerId: const MarkerId("end"), position: destination, infoWindow: const InfoWindow(title: "Destination")),
               },
               polylines: polylines,
+              circles: {
+                if (mapState.myLatLng != null && mapState.accuracy != null)
+                  Circle(
+                    circleId: const CircleId('accuracy'),
+                    center: mapState.myLatLng!,
+                    radius: mapState.accuracy!,
+                    strokeWidth: 1,
+                    strokeColor: Colors.blue.withValues(alpha: 0.4),
+                    fillColor: Colors.blue.withValues(alpha: 0.1),
+                  ),
+              },
             ),
           ),
           if (state.loading) const LinearProgressIndicator(),

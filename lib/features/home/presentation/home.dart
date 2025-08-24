@@ -1,10 +1,14 @@
 import 'package:car_routing_application/config/routes/app_pages.dart';
+import 'package:car_routing_application/core/constants/app_values.dart';
 import 'package:car_routing_application/core/widget/app_button.dart';
+import 'package:car_routing_application/core/widget/app_text.dart';
 import 'package:car_routing_application/core/widget/location_search_widget.dart';
 import 'package:car_routing_application/features/home/domain/entities/place_details.dart';
 import 'package:car_routing_application/features/home/domain/providers.dart';
+import 'package:car_routing_application/features/home/presentation/widget/my_current_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends ConsumerStatefulWidget {
    const HomePage({super.key});
@@ -64,15 +68,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               const SizedBox(height: 16),
 
-              // Greeting Section
-              const Text(
-                "Hi Emery,",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
+              AppText(text: 'Hi Emery,', fontSize: AppValues.fontSize_14, textColor: Colors.grey,),
               const SizedBox(height: 4),
-              const Text(
-                "Where do you will go?",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+               AppText(
+                text: "Where do you will go?",
+                fontSize: AppValues.fontSize_22,
+                fontWeight: FontWeight.bold,
               ),
               const SizedBox(height: 20),
 
@@ -122,6 +123,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
 
               const SizedBox(height: 20),
+
+              MyCurrentLocation(),
 
             ],
           ),

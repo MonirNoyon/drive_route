@@ -4,6 +4,9 @@ import 'package:car_routing_application/config/api_client/model/common_response.
 import 'package:car_routing_application/config/api_client/update_api_client.dart';
 import 'package:car_routing_application/features/home/data/model/place_details_model.dart';
 import 'package:car_routing_application/features/home/data/model/place_suggestion_model.dart';
+import 'package:car_routing_application/features/home/domain/entities/location_entity.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -19,6 +22,9 @@ abstract class GooglePlacesRemoteDataSource {
       String placeId, {
         String? sessionToken,
       });
+
+  Future<LocationEntity> getCurrent();
+  Stream<LocationEntity> watch();
 }
 
 class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
@@ -31,6 +37,21 @@ class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
       throw StateError('GOOGLE_MAPS_API_KEY not found in .env');
     }
     return k;
+  }
+
+  Future<void> _ensurePermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      throw Exception('Location permission not granted');
+    }
   }
 
   @override
@@ -103,5 +124,29 @@ class GooglePlacesRemoteDataSourceImpl implements GooglePlacesRemoteDataSource {
       },
     );
     return placeDetails;
+  }
+
+  @override
+  Future<LocationEntity> getCurrent() async{
+    await _ensurePermission();
+    final pos = await Geolocator.getCurrentPosition();
+    return LocationEntity(
+      latLng: LatLng(pos.latitude, pos.longitude),
+      accuracyMeters: pos.accuracy,
+    );
+  }
+
+  @override
+  Stream<LocationEntity> watch() async* {
+    await _ensurePermission();
+    yield* Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5, // meters
+      ),
+    ).map((pos) => LocationEntity(
+      latLng: LatLng(pos.latitude, pos.longitude),
+      accuracyMeters: pos.accuracy,
+    ));
   }
 }
