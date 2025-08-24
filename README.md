@@ -17,6 +17,8 @@ A Flutter project for car routing, navigation, and map-based features.
 ---
 
 ## 🏗️ Project Folder Architecture
+
+```text
 lib/
 ├─ config/                      # App-wide configuration
 │  ├─ api_client/               # API client setup
