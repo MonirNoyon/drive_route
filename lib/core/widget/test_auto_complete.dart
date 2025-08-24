@@ -102,9 +102,16 @@ class _LocationSearchWidgetState extends ConsumerState<LocationSearchWidget> {
   Widget build(BuildContext context) {
     return CompositedTransformTarget(
       link: _layerLink,
-      child: TextField(
+      child: TextFormField(
         controller: _controller,
         onChanged: (value)=>_onChanged(),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter some text';
+          }
+          return null;
+        },
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         style: TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: widget.hintText,

@@ -13,25 +13,21 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  final TextEditingController _pickupController = TextEditingController();
-  final TextEditingController _dropOffController = TextEditingController();
 
   PlaceDetails? pickUpPlaceDetails;
   PlaceDetails? dropOffPlaceDetails;
+
+  final formKey = GlobalKey<FormState>();
 
 
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
-    _pickupController.dispose();
-    _dropOffController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final pickupSuggestionsList = ref.watch(pickupSuggestionsProvider);
-    final dropOffSuggestionsList = ref.watch(dropOffSuggestionsProvider);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -87,45 +83,49 @@ class _HomePageState extends ConsumerState<HomePage> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: SingleChildScrollView(
-                  child: Column(
-                    spacing: 12,
-                    children: [
-
-                      LocationSearchWidget(
-                          prefixIcon: Icon(Icons.my_location,color: Colors.white,),
-                          hintText: "Pick-up location",
-                          onSuggestedData: (value){
-                            pickUpPlaceDetails = value;
-                          }
-                      ),
-                      LocationSearchWidget(
-                          prefixIcon: Icon(Icons.place_outlined,color: Colors.white,),
-                          hintText: "Drop-off location",
-                          onSuggestedData: (value){
-                            dropOffPlaceDetails = value;
-                          }
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            FocusNode().unfocus();
-                            Navigator.pushNamed(context, AppPages.bookingPage,arguments: {
-                              "pick_up": pickUpPlaceDetails,
-                              "drop_off": dropOffPlaceDetails,
-                            });
-                          },
-                          child: const Text("Find drivers"),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      spacing: 12,
+                      children: [
+                        LocationSearchWidget(
+                            prefixIcon: Icon(Icons.my_location,color: Colors.white,),
+                            hintText: "Pick-up location",
+                            onSuggestedData: (value){
+                              pickUpPlaceDetails = value;
+                            }
                         ),
-                      )
-                    ],
+                        LocationSearchWidget(
+                            prefixIcon: Icon(Icons.place_outlined,color: Colors.white,),
+                            hintText: "Drop-off location",
+                            onSuggestedData: (value){
+                              dropOffPlaceDetails = value;
+                            }
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              if(formKey.currentState!.validate()){
+                                FocusNode().unfocus();
+                                Navigator.pushNamed(context, AppPages.bookingPage,arguments: {
+                                  "pick_up": pickUpPlaceDetails,
+                                  "drop_off": dropOffPlaceDetails,
+                                });
+                              }
+                            },
+                            child: const Text("Find drivers"),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -136,20 +136,6 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _serviceIcon(String path, String title) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: Colors.grey.shade100,
-          radius: 28,
-          child: Image.asset(path, height: 28, fit: BoxFit.contain),
-        ),
-        const SizedBox(height: 6),
-        Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-      ],
     );
   }
 }
