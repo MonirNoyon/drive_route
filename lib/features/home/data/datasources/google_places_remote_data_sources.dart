@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:car_routing_application/config/api_client/model/common_response.dart';
 import 'package:car_routing_application/config/api_client/update_api_client.dart';
 import 'package:car_routing_application/features/home/data/model/place_details_model.dart';
@@ -7,7 +5,6 @@ import 'package:car_routing_application/features/home/data/model/place_suggestio
 import 'package:car_routing_application/features/home/domain/entities/location_entity.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 

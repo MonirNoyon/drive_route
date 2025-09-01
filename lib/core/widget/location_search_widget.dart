@@ -46,7 +46,7 @@ class _LocationSearchWidgetState extends ConsumerState<LocationSearchWidget> {
       sessionToken: 'uuid-1',
       countryComponent: 'country:bd',
     );
-    setState(() {});
+    // setState(() {});
 
     _removeOverlay();
     if (_placeList.isNotEmpty) {
@@ -122,9 +122,10 @@ class _LocationSearchWidgetState extends ConsumerState<LocationSearchWidget> {
             onPressed: () {
               _controller.clear();
               _removeOverlay();
-              setState(() {
-                _placeList = [];
-              });
+              _placeList = [];
+              // setState(() {
+              //   _placeList = [];
+              // });
             },
           )
               : null,
